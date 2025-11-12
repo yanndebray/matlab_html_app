@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Linear Regression</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quick-cities {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .city-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .city-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-field label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .input-field input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.visible {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .chart-placeholder {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-preview {
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .equation {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin: 20px 0;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌤️ Weather Linear Regression Analysis [DEBUG MODE]</h1>
+            <p>Analyze temperature trends with machine learning powered by MATLAB</p>
+            <p style="font-size: 14px; margin-top: 10px; opacity: 0.8;">🔍 Console logging enabled - Press F12 to open developer tools</p>
+        </div>
+
+        <div class="content">
+            <!-- Quick City Selection -->
+            <div class="section">
+                <div class="section-title">🌍 Quick City Selection</div>
+                <div class="quick-cities">
+                    <button class="city-btn" onclick="selectCity('montreal')">Montreal 🍁</button>
+                    <button class="city-btn" onclick="selectCity('paris')">Paris 🗼</button>
+                    <button class="city-btn" onclick="selectCity('newyork')">New York 🗽</button>
+                    <button class="city-btn" onclick="selectCity('london')">London 🎡</button>
+                    <button class="city-btn" onclick="selectCity('tokyo')">Tokyo 🗾</button>
+                    <button class="city-btn" onclick="selectCity('sydney')">Sydney 🦘</button>
+                </div>
+            </div>
+
+            <!-- Location Input -->
+            <div class="section">
+                <div class="section-title">📍 Location & Date Range</div>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label for="latitude">Latitude</label>
+                        <input type="number" id="latitude" step="0.0001" value="45.5017" placeholder="e.g., 45.5017">
+                    </div>
+                    <div class="input-field">
+                        <label for="longitude">Longitude</label>
+                        <input type="number" id="longitude" step="0.0001" value="-73.5673" placeholder="e.g., -73.5673">
+                    </div>
+                    <div class="input-field">
+                        <label for="startDate">Start Date</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    <div class="input-field">
+                        <label for="endDate">End Date</label>
+                        <input type="date" id="endDate">
+                    </div>
+                </div>
+                <button class="btn" onclick="fetchData()">📥 Fetch Weather Data</button>
+                <button class="btn" onclick="performRegression()" id="regressionBtn" disabled>📊 Perform Regression</button>
+                
+                <div id="status" class="status"></div>
+            </div>
+
+            <!-- Data Summary -->
+            <div class="section results" id="dataSection">
+                <div class="section-title">📊 Weather Data Summary</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Data Points</div>
+                        <div class="stat-value" id="dataPoints">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Temperature (°C)</div>
+                        <div class="stat-value" id="avgTemp">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Max Temperature (°C)</div>
+                        <div class="stat-value" id="maxTemp">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Min Temperature (°C)</div>
+                        <div class="stat-value" id="minTemp">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Regression Results -->
+            <div class="section results" id="regressionSection">
+                <div class="section-title">📈 Linear Regression Results</div>
+                
+                <div class="equation" id="equation">
+                    Temperature = m × Day + b
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Slope (m)</div>
+                        <div class="stat-value" id="slope">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Intercept (b)</div>
+                        <div class="stat-value" id="intercept">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">R² Score</div>
+                        <div class="stat-value" id="rSquared">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">RMSE</div>
+                        <div class="stat-value" id="rmse">-</div>
+                    </div>
+                </div>
+
+                <div class="chart-placeholder">
+                    <div style="font-weight: bold; color: #667eea;">Trend Analysis:</div>
+                    <div id="trendText" style="font-size: 18px;">-</div>
+                    <div style="margin-top: 15px; font-weight: bold; color: #667eea;">Temperature Change:</div>
+                    <div id="tempChange" style="font-size: 18px;">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // DEBUG MODE - Enhanced logging
+        console.log('[DEBUG] Script loading...');
+        console.log('[DEBUG] Timestamp:', new Date().toISOString());
+        
+        // Initialize dates
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('[DEBUG] DOM Content Loaded');
+            const today = new Date();
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(today.getMonth() - 3);
+            
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('startDate').value = threeMonthsAgo.toISOString().split('T')[0];
+            console.log('[DEBUG] Dates initialized');
+        });
+
+        // Setup callback to receive data from MATLAB
+        function setup(htmlComponent) {
+            console.log('[DEBUG] setup() called');
+            console.log('[DEBUG] htmlComponent:', htmlComponent);
+            
+            htmlComponent.addEventListener("DataChanged", function(event) {
+                console.log('[DEBUG] DataChanged event received');
+                console.log('[DEBUG] event.Data:', event.Data);
+                handleMATLABData(event.Data);
+            });
+            
+            console.log('[DEBUG] Event listener registered');
+        }
+
+        function selectCity(city) {
+            console.log('[DEBUG] selectCity() called with:', city);
+            const data = {
+                action: 'quickSelect',
+                city: city
+            };
+            console.log('[DEBUG] Sending data:', data);
+            sendToMATLAB(data);
+        }
+
+        function fetchData() {
+            console.log('[DEBUG] fetchData() called');
+            const latitude = parseFloat(document.getElementById('latitude').value);
+            const longitude = parseFloat(document.getElementById('longitude').value);
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            console.log('[DEBUG] Form values:', {latitude, longitude, startDate, endDate});
+
+            if (!latitude || !longitude || !startDate || !endDate) {
+                console.warn('[WARNING] Missing form values');
+                showStatus('Please fill in all fields', 'error');
+                return;
+            }
+
+            const data = {
+                action: 'fetchData',
+                latitude: latitude,
+                longitude: longitude,
+                startDate: startDate,
+                endDate: endDate
+            };
+
+            console.log('[DEBUG] Sending data:', data);
+            sendToMATLAB(data);
+        }
+
+        function performRegression() {
+            console.log('[DEBUG] performRegression() called');
+            const data = {
+                action: 'performRegression'
+            };
+            console.log('[DEBUG] Sending data:', data);
+            sendToMATLAB(data);
+        }
+
+        function sendToMATLAB(data) {
+            console.log('[DEBUG] sendToMATLAB() called');
+            console.log('[DEBUG] typeof htmlComponent:', typeof htmlComponent);
+            console.log('[DEBUG] htmlComponent defined:', typeof htmlComponent !== 'undefined');
+            
+            if (typeof htmlComponent !== 'undefined') {
+                console.log('[DEBUG] htmlComponent object:', htmlComponent);
+                console.log('[DEBUG] Setting htmlComponent.Data...');
+                try {
+                    htmlComponent.Data = data;
+                    console.log('[DEBUG] ✓ Data sent successfully!');
+                } catch (error) {
+                    console.error('[ERROR] Failed to set Data:', error);
+                }
+            } else {
+                console.error('[ERROR] htmlComponent is not defined!');
+                showStatus('ERROR: HTML-MATLAB bridge not initialized. Check console.', 'error');
+            }
+        }
+
+        function handleMATLABData(data) {
+            console.log('[DEBUG] handleMATLABData() called');
+            console.log('[DEBUG] Received data:', data);
+            
+            if (!data || !data.action) {
+                console.warn('[WARNING] Invalid data received');
+                return;
+            }
+
+            console.log('[DEBUG] Action:', data.action);
+
+            switch(data.action) {
+                case 'test':
+                    console.log('[DEBUG] Test action received:', data.message);
+                    showStatus(data.message || 'Test message received', 'success');
+                    break;
+                    
+                case 'status':
+                    console.log('[DEBUG] Status update:', data.message);
+                    showStatus(data.message, data.type);
+                    break;
+                
+                case 'updateLocation':
+                    console.log('[DEBUG] Updating location:', data);
+                    document.getElementById('latitude').value = data.latitude;
+                    document.getElementById('longitude').value = data.longitude;
+                    break;
+                
+                case 'displayData':
+                    console.log('[DEBUG] Displaying data:', data);
+                    displayWeatherData(data);
+                    break;
+                
+                case 'displayRegression':
+                    console.log('[DEBUG] Displaying regression:', data);
+                    displayRegressionResults(data);
+                    break;
+                    
+                default:
+                    console.warn('[WARNING] Unknown action:', data.action);
+            }
+        }
+
+        function displayWeatherData(data) {
+            document.getElementById('dataSection').classList.add('visible');
+            document.getElementById('regressionBtn').disabled = false;
+            
+            document.getElementById('dataPoints').textContent = data.dataPoints;
+            
+            const avgTemp = (data.tempAvg.reduce((a, b) => a + b, 0) / data.tempAvg.length).toFixed(1);
+            const maxTemp = Math.max(...data.tempMax).toFixed(1);
+            const minTemp = Math.min(...data.tempMin).toFixed(1);
+            
+            document.getElementById('avgTemp').textContent = avgTemp;
+            document.getElementById('maxTemp').textContent = maxTemp;
+            document.getElementById('minTemp').textContent = minTemp;
+        }
+
+        function displayRegressionResults(data) {
+            document.getElementById('regressionSection').classList.add('visible');
+            
+            const slope = data.slope.toFixed(6);
+            const intercept = data.intercept.toFixed(2);
+            const rSquared = data.rSquared.toFixed(4);
+            const rmse = data.rmse.toFixed(2);
+            
+            document.getElementById('slope').textContent = slope;
+            document.getElementById('intercept').textContent = intercept;
+            document.getElementById('rSquared').textContent = rSquared;
+            document.getElementById('rmse').textContent = rmse + ' °C';
+            
+            document.getElementById('equation').textContent = 
+                `Temperature = ${slope} × Day + ${intercept}`;
+            
+            document.getElementById('trendText').textContent = data.trendText;
+            
+            const tempChange = data.tempChange.toFixed(2);
+            const changeText = tempChange > 0 ? 
+                `Temperature increased by ${tempChange}°C over the period` :
+                `Temperature decreased by ${Math.abs(tempChange)}°C over the period`;
+            document.getElementById('tempChange').textContent = changeText;
+        }
+
+        function showStatus(message, type) {
+            console.log('[DEBUG] showStatus():', type, '-', message);
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+        }
+    </script>
+</body>
+</html>
